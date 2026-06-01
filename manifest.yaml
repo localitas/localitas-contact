@@ -1,0 +1,10 @@
+name: contact
+display_name: Contacts
+description: Personal contact management
+version: 0.1.0
+
+database:
+  name: contacts
+  system: true
+
+migrations_dir: migrations

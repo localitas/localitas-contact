@@ -1,0 +1,20 @@
+{{define "header"}}
+<div id="contact-header" class="flex items-center gap-2">
+    {{if .Contact}}
+    <button id="save-btn" class="btn opacity-50" disabled
+            hx-post="partials/save/{{.Contact.ID}}"
+            hx-include="#contact-yaml"
+            hx-target="#main-widget-container"
+            hx-swap="innerHTML">
+        <i data-lucide="save" class="w-4 h-4"></i> Save
+    </button>
+    <button class="btn btn-danger"
+            hx-delete="partials/delete/{{.Contact.ID}}"
+            hx-target="#main-widget-container"
+            hx-swap="innerHTML"
+            hx-confirm="Delete this contact?">
+        <i data-lucide="trash-2" class="w-4 h-4"></i>
+    </button>
+    {{end}}
+</div>
+{{end}}

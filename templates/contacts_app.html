@@ -1,0 +1,131 @@
+{{define "app-content"}}
+<div class="p-6">
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-primary mb-2">Contacts</h1>
+        <p class="text-sm text-secondary">Manage your contact information</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="mb-6">
+        <div class="flex space-x-1 glass-panel p-1 rounded-lg inline-flex">
+            <button class="tab-button active px-4 py-2 rounded text-sm font-medium transition-all"
+                    onclick="switchTab('all')">
+                <i data-lucide="users" class="w-4 h-4 inline mr-2"></i>
+                All Contacts
+            </button>
+            <button class="tab-button px-4 py-2 rounded text-sm font-medium transition-all"
+                    onclick="switchTab('search')">
+                <i data-lucide="search" class="w-4 h-4 inline mr-2"></i>
+                Search
+            </button>
+        </div>
+    </div>
+
+    <!-- All Contacts Tab -->
+    <div id="all-tab" class="tab-content">
+        <div class="glass-panel p-6 rounded-lg">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-primary">Contact List</h2>
+                <button hx-post="/api/contacts/create"
+                        hx-target="#contacts-list"
+                        hx-swap="afterbegin"
+                        class="glass-button px-4 py-2 rounded-lg font-medium hover:bg-glass-hover transition-all">
+                    <i data-lucide="plus" class="w-4 h-4 inline mr-2"></i>
+                    New Contact
+                </button>
+            </div>
+
+            <div id="contacts-list" class="space-y-3">
+                <!-- Contacts loaded via HTMX -->
+                <div hx-get="/apps/contacts/api/contacts?limit=50"
+                     hx-trigger="load"
+                     hx-target="#contacts-list"
+                     hx-swap="innerHTML">
+                    <div class="text-center py-8 text-secondary">
+                        <i data-lucide="loader" class="w-8 h-8 mx-auto mb-2 animate-spin"></i>
+                        <p>Loading contacts...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Tab -->
+    <div id="search-tab" class="tab-content hidden">
+        <div class="glass-panel p-6 rounded-lg">
+            <h2 class="text-lg font-semibold text-primary mb-4">Search Contacts</h2>
+
+            <!-- Search Form -->
+            <form hx-get="/apps/contacts/api/search"
+                  hx-target="#search-results"
+                  hx-trigger="submit"
+                  class="mb-6">
+                <div class="flex space-x-2">
+                    <input type="text"
+                           name="query"
+                           placeholder="Search by name, email, company..."
+                           class="flex-1 px-4 py-2 glass-panel rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                           required>
+                    <button type="submit"
+                            class="glass-button px-6 py-2 rounded-lg font-medium hover:bg-glass-hover transition-all">
+                        <i data-lucide="search" class="w-4 h-4 inline mr-2"></i>
+                        Search
+                    </button>
+                </div>
+            </form>
+
+            <!-- Search Results -->
+            <div id="search-results" class="space-y-2">
+                <div class="text-center py-8 text-secondary">
+                    <i data-lucide="search" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                    <p>Enter a search query to find contacts</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function switchTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+    });
+
+    // Remove active class from all buttons
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active', 'bg-glass');
+    });
+
+    // Show selected tab
+    document.getElementById(tabName + '-tab').classList.remove('hidden');
+
+    // Add active class to clicked button
+    event.target.closest('.tab-button').classList.add('active', 'bg-glass');
+}
+
+// Initialize Lucide icons after content loads
+document.addEventListener('htmx:afterSettle', function() {
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+});
+</script>
+
+<style>
+.tab-button {
+    color: var(--text-secondary);
+}
+
+.tab-button:hover {
+    background: var(--glass-hover);
+    color: var(--text-primary);
+}
+
+.tab-button.active {
+    background: var(--glass);
+    color: var(--primary);
+}
+</style>
+{{end}}

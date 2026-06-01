@@ -1,0 +1,328 @@
+{{template "base.html" .}}
+
+{{define "additional-head"}}
+    {{template "theme-purple"}}
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+{{end}}
+
+{{define "page-styles"}}
+<style>
+    .contacts-app {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        gap: 0.5rem;
+        padding: 0.5rem;
+    }
+
+    .search-box {
+        min-width: 200px;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        background: var(--color-glass-base);
+        border: 1px solid var(--color-glass-border);
+        border-radius: 0.5rem;
+        color: var(--color-text-primary);
+        transition: all 0.2s;
+        font-size: 0.875rem;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.15);
+    }
+
+    .contact-editor {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        flex: 1;
+    }
+
+    .editor-content {
+        flex: 1;
+        min-height: 0;
+    }
+
+    .yaml-editor {
+        width: 100%;
+        height: 100%;
+        min-height: 500px;
+        padding: 1rem;
+        background: var(--color-glass-base);
+        border: 1px solid var(--color-glass-border);
+        border-radius: 0.5rem;
+        color: var(--color-text-primary);
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 14px;
+        line-height: 1.6;
+        resize: vertical;
+        white-space: pre;
+        overflow-wrap: normal;
+        overflow-x: auto;
+    }
+
+    .yaml-editor:focus {
+        outline: none;
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 3px var(--color-accent-shadow);
+    }
+
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem 2rem;
+        text-align: center;
+    }
+
+    .empty-icon {
+        width: 64px;
+        height: 64px;
+        color: var(--color-text-secondary);
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h2 {
+        color: var(--color-text-primary);
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: var(--color-text-secondary);
+        margin-bottom: 1.5rem;
+    }
+
+    .me-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.125rem 0.375rem;
+        font-size: 0.625rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        background: var(--color-accent);
+        color: var(--color-bg-base);
+        border-radius: 0.25rem;
+        margin-left: 0.375rem;
+        vertical-align: middle;
+    }
+
+    .dark .me-badge {
+        color: var(--color-bg-elevated);
+    }
+
+    .sidebar-item:hover .me-badge,
+    .sidebar-item.active-purple .me-badge {
+        background: rgba(26, 22, 37, 0.3);
+        color: #1a1625;
+    }
+
+    .error-message {
+        background: var(--color-error);
+        color: white;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .success-message {
+        background: var(--color-success);
+        color: #0d3620;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+    }
+</style>
+{{end}}
+
+{{define "app-selector-bar"}}
+{{template "app-selector" .}}
+{{end}}
+
+{{define "content"}}
+<div class="background-content"></div>
+
+<div class="flex-1 flex" style="min-height:0;">
+    <!-- Contacts Sidebar -->
+    <div id="contacts-sidebar" class="sidebar sidebar-glass flex flex-col" style="position: relative;">
+        <div class="resize-handle" id="resize-handle"></div>
+
+        <a hx-get="/apps/contacts/help?format=html" hx-target="#main-widget-container" hx-swap="innerHTML" style="display:flex; align-items:center; gap:0.75rem; height:56px; min-height:56px; padding:0 1rem; border-bottom:1px solid var(--color-glass-border); color:var(--color-text-secondary); text-decoration:none; font-size:0.875rem; font-weight:500; flex-shrink:0; border-radius:0; cursor:pointer;">
+            <i data-lucide="book-open" style="width:18px; height:18px;"></i>
+            Documentation
+        </a>
+
+        <div class="sidebar-header justify-between">
+            <h2 class="text-base font-semibold text-primary">Contacts</h2>
+            <button class="header-btn"
+                    hx-post="/apps/contacts/partials/create"
+                    hx-target="#main-widget-container"
+                    hx-swap="innerHTML"
+                    title="Add Contact">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto glass-scrollbar p-2">
+            <div class="search-box mb-2">
+                <input type="text"
+                       id="search-input"
+                       name="query"
+                       class="search-input"
+                       placeholder="Search contacts..."
+                       hx-post="/apps/contacts/partials/search"
+                       hx-trigger="input changed delay:300ms, keyup[key=='Enter']"
+                       hx-target="#contacts-sidebar-list"
+                       hx-swap="outerHTML">
+            </div>
+            {{template "sidebar_list" .}}
+        </div>
+    </div>
+
+    <!-- Main Editor Area -->
+    <div class="flex-1 flex flex-col" id="main-widget-container">
+        <!-- Top Bar -->
+        <div class="main-widget-header">
+            <button id="toggle-sidebar" class="menu-btn">
+                <i data-lucide="menu" class="w-5 h-5"></i>
+            </button>
+            <span class="text-primary font-medium">Select a contact</span>
+        </div>
+
+        <div class="flex-1 overflow-y-auto glass-scrollbar">
+            <div class="contacts-app">
+                <div class="empty-state">
+                    <i data-lucide="users" class="empty-icon"></i>
+                    <h2>No contact selected</h2>
+                    <p>Search for a contact or create a new one</p>
+                    <button class="btn btn-primary"
+                            hx-post="/apps/contacts/partials/create"
+                            hx-target="#main-widget-container"
+                            hx-swap="innerHTML">
+                        Create New Contact
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "page-scripts"}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        lucide.createIcons();
+    });
+
+    const sidebar = document.getElementById('contacts-sidebar');
+    const toggleBtn = document.getElementById('toggle-sidebar');
+    const resizeHandle = document.getElementById('resize-handle');
+
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('hidden');
+        });
+    }
+
+    let isResizing = false;
+    let startX, startWidth;
+
+    if (resizeHandle) {
+        resizeHandle.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = parseInt(getComputedStyle(sidebar).width, 10);
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            const width = startWidth + (e.clientX - startX);
+            if (width >= 200 && width <= 500) {
+                sidebar.style.width = width + 'px';
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            }
+        });
+    }
+
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        lucide.createIcons();
+
+        const editor = document.getElementById('contact-yaml');
+        if (editor) {
+            const name = extractName(editor.value);
+            const titleEl = document.getElementById('contact-title');
+            if (titleEl) titleEl.textContent = name || 'Unnamed';
+
+            editor.addEventListener('input', function() {
+                const name = extractName(this.value);
+                const titleEl = document.getElementById('contact-title');
+                if (titleEl) titleEl.textContent = name || 'Unnamed';
+            });
+        }
+    });
+
+    function extractName(yaml) {
+        const match = yaml.match(/^full_name:\s*(.+)$/m);
+        return match ? match[1].trim() : 'Unnamed';
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const contactParam = urlParams.get('contact');
+    if (contactParam) {
+        htmx.ajax('GET', '/apps/contacts/partials/editor/' + contactParam, '#main-widget-container');
+    }
+
+    // Keyboard shortcut for save (Cmd/Ctrl + S)
+    document.addEventListener('keydown', function(e) {
+        if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+            e.preventDefault();
+            const saveBtn = document.querySelector('[hx-post*="/partials/save/"]');
+            if (saveBtn) {
+                htmx.trigger(saveBtn, 'click');
+            }
+        }
+    });
+
+    // UI Live Sync: Broadcast updates to all cluster nodes
+    document.body.addEventListener('htmx:afterRequest', function(e) {
+        if (!e.detail.successful) return;
+        if (e.detail.requestConfig.verb === 'get') return;
+
+        const path = e.detail.requestConfig.path;
+        const userName = document.body.dataset.userName || 'Someone';
+
+        if (path.includes('/contacts/partials/create')) {
+            broadcastUIExec("if(document.getElementById('contacts-sidebar-list')){htmx.ajax('GET', '/apps/contacts/partials/sidebar', {target: '#contacts-sidebar-list', swap: 'outerHTML'});} showToast('" + userName + " created a new contact', 'success');");
+        }
+
+        if (path.includes('/contacts/partials/delete')) {
+            broadcastUIExec("if(document.getElementById('contacts-sidebar-list')){htmx.ajax('GET', '/apps/contacts/partials/sidebar', {target: '#contacts-sidebar-list', swap: 'outerHTML'});} showToast('Contact was deleted', 'warning');");
+        }
+
+        if (path.includes('/contacts/partials/save/')) {
+            const editor = document.getElementById('contact-yaml');
+            const contactName = editor ? extractName(editor.value).replace(/'/g, "\\'") : 'a contact';
+            broadcastUIExec("if(document.getElementById('contacts-sidebar-list')){htmx.ajax('GET', '/apps/contacts/partials/sidebar', {target: '#contacts-sidebar-list', swap: 'outerHTML'});} showToast('" + userName + " updated \"" + contactName + "\"', 'success');");
+        }
+    });
+</script>
+{{end}}

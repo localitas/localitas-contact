@@ -1,0 +1,47 @@
+{{define "editor"}}
+<!-- Main Widget Header with Title and Actions -->
+<div class="main-widget-header">
+    <button id="toggle-sidebar" class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('hidden')">
+        <i data-lucide="menu" class="w-5 h-5"></i>
+    </button>
+    <span class="text-primary font-medium flex-1">{{if .ContactName}}{{.ContactName}}{{else}}Unnamed{{end}}</span>
+    <button
+        class="header-btn"
+        hx-post="partials/save/{{.Contact.ID}}"
+        hx-target="#main-widget-container"
+        hx-include="#contact-yaml"
+        title="Save"
+    >
+        <i data-lucide="save" class="w-5 h-5"></i>
+    </button>
+    <button
+        class="header-btn text-error btn-delete-confirm"
+        hx-delete="partials/delete/{{.Contact.ID}}"
+        hx-target="#main-widget-container"
+        data-confirm-message="Delete this contact?"
+        title="Delete"
+    >
+        <i data-lucide="trash-2" class="w-5 h-5"></i>
+    </button>
+</div>
+
+<!-- Contact Editor Content -->
+<div class="flex-1 overflow-y-auto glass-scrollbar">
+    <div class="contacts-app">
+        <div class="contact-editor" id="contact-editor">
+            <input type="hidden" id="contact-id" value="{{.Contact.ID}}">
+            <div class="editor-content">
+                <textarea
+                    id="contact-yaml"
+                    name="data"
+                    class="yaml-editor"
+                    hx-post="partials/save/{{.Contact.ID}}"
+                    hx-trigger="blur changed"
+                    hx-target="#main-widget-container"
+                    hx-include="this"
+                >{{.Contact.Data}}</textarea>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
